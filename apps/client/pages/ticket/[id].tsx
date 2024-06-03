@@ -30,6 +30,13 @@ function classNames(...classes: any) {
   return classes.filter(Boolean).join(" ");
 }
 
+const ticketStatusMapping = {
+  needs_support: "Needs Support",
+  in_progress: "In Progress",
+  in_review: "In Review",
+  done: "Done",
+};
+
 export default function Ticket() {
   const router = useRouter();
   const { t } = useTranslation("peppermint");
@@ -352,40 +359,23 @@ export default function Ticket() {
                       )}
                     </div>
                   </div>
-                  <div className="mt-4 flex space-x-3 md:mt-0">
+                  <div className="mt-4 flex h-8 space-x-3 md:mt-0">
                     {!edit ? (
-                      <DropdownMenu.Root>
-                        <DropdownMenu.Trigger className="hover:cursor-pointer">
-                          <Button variant="outline">Options</Button>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Content className="min-w-[176px] mr-6">
-                          <DropdownMenu.Item
-                            className="min-w-[176px] capitalize hover:cursor-pointer"
-                            onClick={() => setEdit(!edit)}
-                          >
-                            {!edit ? t("edit-btn") : "save"}
-                          </DropdownMenu.Item>
-
-                          {user.isAdmin && (
-                            <DropdownMenu.Item
-                              className="hover:cursor-pointer"
-                              onClick={() => hide(!data.ticket.hidden)}
-                            >
-                              {data.ticket.hidden
-                                ? "Show Global"
-                                : "Hide Ticket"}
-                            </DropdownMenu.Item>
-                          )}
-                        </DropdownMenu.Content>
-                      </DropdownMenu.Root>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        className="hover:cursor-pointer align-top"
-                        onClick={() => update()}
+                      <button
+                        type="button"
+                        onClick={() => setEdit(true)}
+                        className="inline-flex justify-center gap-x-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                       >
-                        Save
-                      </Button>
+                        {t("edit")}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => update()}
+                        className="inline-flex justify-center gap-x-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                      >
+                        {t("save")}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -456,18 +446,7 @@ export default function Ticket() {
                                 />
                               </div>
                               <div className="ml-3 text-xs font-semibold text-gray-900">
-                                {data.ticket.status === "needs_support" && (
-                                  <span>Needs Support</span>
-                                )}
-                                {data.ticket.status === "in_progress" && (
-                                  <span>In Progress</span>
-                                )}
-                                {data.ticket.status === "in_review" && (
-                                  <span>In Review</span>
-                                )}
-                                {data.ticket.status === "done" && (
-                                  <span>Done</span>
-                                )}
+                                {ticketStatusMapping[data.ticket.status]}
                               </div>
                             </div>
                           </li>
@@ -488,10 +467,38 @@ export default function Ticket() {
                       </>
                     ) : (
                       <>
-                        <span>Created by at </span>
-                        <span className="">
-                          {moment(data.ticket.createdAt).format("DD/MM/YYYY")}
-                        </span>
+                        {data.ticket.createdBy ? (
+                          <>
+                            <span>
+                              Created by{" "}
+                              <strong>{data.ticket.createdBy.name}</strong> at{" "}
+                            </span>
+                            <span className="">
+                              {moment(data.ticket.createdAt).format("LLL")}
+                              {data.ticket.client && (
+                                <span>
+                                  {" "}
+                                  for <strong>{data.ticket.client.name}</strong>
+                                </span>
+                              )}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Created at </span>
+                            <span className="">
+                              <strong>
+                                {moment(data.ticket.createdAt).format("LLL")}
+                              </strong>
+                              {data.ticket.client && (
+                                <span>
+                                  {" "}
+                                  for <strong>{data.ticket.client.name}</strong>
+                                </span>
+                              )}
+                            </span>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
@@ -928,25 +935,14 @@ export default function Ticket() {
                               />
                             </div>
                             <div className="ml-3 text-xs font-semibold text-gray-900 dark:text-white">
-                              {data.ticket.status === "needs_support" && (
-                                <span>Needs Support</span>
-                              )}
-                              {data.ticket.status === "in_progress" && (
-                                <span>In Progress</span>
-                              )}
-                              {data.ticket.status === "in_review" && (
-                                <span>In Review</span>
-                              )}
-                              {data.ticket.status === "done" && (
-                                <span>Done</span>
-                              )}
+                              {ticketStatusMapping[data.ticket.status]}
                             </div>
                           </div>
                         </li>
                       )}
                     </ul>
                   ) : (
-                    <>
+                    <div className={"w-[150px]"}>
                       <Listbox value={priority} onChange={setPriority}>
                         {({ open }) => (
                           <>
@@ -1110,8 +1106,8 @@ export default function Ticket() {
                               <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                 <div className="block truncate">
                                   {ticketStatus
-                                    ? ticketStatus
-                                    : data.ticket.status}
+                                    ? ticketStatusMapping[ticketStatus]
+                                    : ticketStatusMapping[data.ticket.status]}
                                 </div>
                                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                                   <ChevronUpDownIcon
@@ -1129,181 +1125,60 @@ export default function Ticket() {
                                 leaveTo="opacity-0"
                               >
                                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                  <Listbox.Option
-                                    className={({ active }) =>
-                                      classNames(
-                                        active
-                                          ? "bg-indigo-600 text-white"
-                                          : "text-gray-900",
-                                        "relative cursor-default select-none py-2 pl-3 pr-9"
-                                      )
-                                    }
-                                    value="needs_support"
-                                  >
-                                    {({ selected, active }) => (
-                                      <>
-                                        <span
-                                          className={classNames(
-                                            selected
-                                              ? "font-semibold"
-                                              : "font-normal",
-                                            "block truncate"
-                                          )}
-                                        >
-                                          Needs Support
-                                        </span>
+                                  {Object.keys(ticketStatusMapping).map(
+                                    (status) => (
+                                      <Listbox.Option
+                                        key={status}
+                                        className={({ active }) =>
+                                          classNames(
+                                            active
+                                              ? "bg-indigo-600 text-white"
+                                              : "text-gray-900",
+                                            "relative cursor-default select-none py-2 pl-3 pr-9"
+                                          )
+                                        }
+                                        value={status}
+                                      >
+                                        {({ selected, active }) => (
+                                          <>
+                                            <span
+                                              className={classNames(
+                                                selected
+                                                  ? "font-semibold"
+                                                  : "font-normal",
+                                                "block truncate"
+                                              )}
+                                            >
+                                              {ticketStatusMapping[status]}
+                                            </span>
 
-                                        {selected ? (
-                                          <span
-                                            className={classNames(
-                                              active
-                                                ? "text-white"
-                                                : "text-indigo-600",
-                                              "absolute inset-y-0 right-0 flex items-center pr-4"
-                                            )}
-                                          >
-                                            <CheckIcon
-                                              className="h-5 w-5"
-                                              aria-hidden="true"
-                                            />
-                                          </span>
-                                        ) : null}
-                                      </>
-                                    )}
-                                  </Listbox.Option>
-                                  <Listbox.Option
-                                    className={({ active }) =>
-                                      classNames(
-                                        active
-                                          ? "bg-indigo-600 text-white"
-                                          : "text-gray-900",
-                                        "relative cursor-default select-none py-2 pl-3 pr-9"
-                                      )
-                                    }
-                                    value="in_progress"
-                                  >
-                                    {({ selected, active }) => (
-                                      <>
-                                        <span
-                                          className={classNames(
-                                            selected
-                                              ? "font-semibold"
-                                              : "font-normal",
-                                            "block truncate"
-                                          )}
-                                        >
-                                          In Progress
-                                        </span>
-
-                                        {selected ? (
-                                          <span
-                                            className={classNames(
-                                              active
-                                                ? "text-white"
-                                                : "text-indigo-600",
-                                              "absolute inset-y-0 right-0 flex items-center pr-4"
-                                            )}
-                                          >
-                                            <CheckIcon
-                                              className="h-5 w-5"
-                                              aria-hidden="true"
-                                            />
-                                          </span>
-                                        ) : null}
-                                      </>
-                                    )}
-                                  </Listbox.Option>
-                                  <Listbox.Option
-                                    className={({ active }) =>
-                                      classNames(
-                                        active
-                                          ? "bg-indigo-600 text-white"
-                                          : "text-gray-900",
-                                        "relative cursor-default select-none py-2 pl-3 pr-9"
-                                      )
-                                    }
-                                    value="in_review"
-                                  >
-                                    {({ selected, active }) => (
-                                      <>
-                                        <span
-                                          className={classNames(
-                                            selected
-                                              ? "font-semibold"
-                                              : "font-normal",
-                                            "block truncate"
-                                          )}
-                                        >
-                                          In Review
-                                        </span>
-
-                                        {selected ? (
-                                          <span
-                                            className={classNames(
-                                              active
-                                                ? "text-white"
-                                                : "text-indigo-600",
-                                              "absolute inset-y-0 right-0 flex items-center pr-4"
-                                            )}
-                                          >
-                                            <CheckIcon
-                                              className="h-5 w-5"
-                                              aria-hidden="true"
-                                            />
-                                          </span>
-                                        ) : null}
-                                      </>
-                                    )}
-                                  </Listbox.Option>
-                                  <Listbox.Option
-                                    className={({ active }) =>
-                                      classNames(
-                                        active
-                                          ? "bg-indigo-600 text-white"
-                                          : "text-gray-900",
-                                        "relative cursor-default select-none py-2 pl-3 pr-9"
-                                      )
-                                    }
-                                    value="done"
-                                  >
-                                    {({ selected, active }) => (
-                                      <>
-                                        <span
-                                          className={classNames(
-                                            selected
-                                              ? "font-semibold"
-                                              : "font-normal",
-                                            "block truncate"
-                                          )}
-                                        >
-                                          Done
-                                        </span>
-
-                                        {selected ? (
-                                          <span
-                                            className={classNames(
-                                              active
-                                                ? "text-white"
-                                                : "text-indigo-600",
-                                              "absolute inset-y-0 right-0 flex items-center pr-4"
-                                            )}
-                                          >
-                                            <CheckIcon
-                                              className="h-5 w-5"
-                                              aria-hidden="true"
-                                            />
-                                          </span>
-                                        ) : null}
-                                      </>
-                                    )}
-                                  </Listbox.Option>
+                                            {selected ? (
+                                              <span
+                                                className={classNames(
+                                                  active
+                                                    ? "text-white"
+                                                    : "text-indigo-600",
+                                                  "absolute inset-y-0 right-0 flex items-center pr-4"
+                                                )}
+                                              >
+                                                <CheckIcon
+                                                  className="h-5 w-5"
+                                                  aria-hidden="true"
+                                                />
+                                              </span>
+                                            ) : null}
+                                          </>
+                                        )}
+                                      </Listbox.Option>
+                                    )
+                                  )}
                                 </Listbox.Options>
                               </Transition>
                             </div>
                           </>
                         )}
                       </Listbox>
-                    </>
+                    </div>
                   )}
                 </div>
                 <div className="border-t border-gray-200">
